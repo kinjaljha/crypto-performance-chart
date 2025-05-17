@@ -9,43 +9,42 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import { SYMBOLS } from "./utils";
+import { CRYPTO_CURRENCY_ALIAS, RANGE } from "./utils";
 import { fetchCryptoData } from "./services/coingeckoserv";
 import "./css/CryptoChartContainer.css";
 
 export const CryptoChartContainer = () => {
-  const [symbol, setSymbol] = useState("bitcoin");
+  const [currency, setCurrency] = useState("bitcoin");
   const [data, setData] = useState({ week: [], month: [], year: [] });
 
 const loadData = async () => {
   try {
     const [week, month, year] = await Promise.all([
-      fetchCryptoData(symbol, "week"),
-      fetchCryptoData(symbol, "month"),
-      fetchCryptoData(symbol, "year"),
+      fetchCryptoData(currency, RANGE.week),
+      fetchCryptoData(currency, RANGE.month),
+      fetchCryptoData(currency, RANGE.year),
     ]);
 
     setData({ week, month, year });
   } catch (err) {
-    console.error("Error loading crypto data:", err);
     setData({ week: [], month: [], year: [] });
   }
 };
 
   const handleCryptoChange = (e) => {
-    setSymbol(e.target.value);
+    setCurrency(e.target.value);
   };
 
   useEffect(() => {
     loadData();
-  }, [symbol]);
+  }, [currency]);
 
   return (
     <div className="container">
       <div className="select-container">
         {/* <label>Select Symbol: </label> */}
-        <select id="symbol-select" value={symbol} onChange={handleCryptoChange}>
-          {SYMBOLS.map((sym) => (
+        <select id="currency-select" value={currency} onChange={handleCryptoChange}>
+          {CRYPTO_CURRENCY_ALIAS.map((sym) => (
             <option className="select-option" key={sym} value={sym}>
               {sym}
             </option>

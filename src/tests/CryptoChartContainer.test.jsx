@@ -3,7 +3,7 @@ import React from "react";
 import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import { CryptoChartContainer } from "../CryptoChartContainer";
 import { fetchCryptoData } from "../services/coingeckoserv";
-import { SYMBOLS } from "../utils";
+import { CRYPTO_CURRENCY_ALIAS } from "../utils";
 
 // Mock the fetchCryptoData service
 jest.mock("../services/coingeckoserv", () => ({
@@ -48,10 +48,10 @@ describe("CryptoChartContainer", () => {
     render(<CryptoChartContainer />);
     const select = screen.getByRole("combobox");
 
-    fireEvent.change(select, { target: { value: SYMBOLS[1] } });
+    fireEvent.change(select, { target: { value: CRYPTO_CURRENCY_ALIAS[1] } });
 
     await waitFor(() => {
-      expect(fetchCryptoData).toHaveBeenCalledWith(SYMBOLS[1], "week");
+      expect(fetchCryptoData).toHaveBeenCalledWith(CRYPTO_CURRENCY_ALIAS[1], "week");
     });
   });
 
