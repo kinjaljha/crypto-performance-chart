@@ -1,28 +1,69 @@
-import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { CryptoChartContainer } from '../CryptoChartContainer'; // Adjust the import path if needed
-import { SYMBOLS } from '../utils'; // Ensure this import is correct
-// import { fetchCryptoData } from '../services/coingeckoserv'; // The service to fetch data
+/* eslint-disable testing-library/no-wait-for-multiple-assertions */
+import React from "react";
+import { render, screen, waitFor, fireEvent } from "@testing-library/react";
+import { CryptoChartContainer } from "../CryptoChartContainer";
+import { fetchCryptoData } from "../services/coingeckoserv";
+import { SYMBOLS } from "../utils";
 
-// Mocking the fetchCryptoData function
-jest.mock('../services/coingeckoserv', () => ({
-  fetchCryptoData: jest.fn(() => Promise.resolve([])), // Always resolve with empty data for testing
+// Mock the fetchCryptoData service
+jest.mock("../services/coingeckoserv", () => ({
+  fetchCryptoData: jest.fn(),
 }));
 
+describe("CryptoChartContainer", () => {
+  const mockData = [
+    { date: "2024-01-01", price: 100 },
+    { date: "2024-01-02", price: 110 },
+  ];
 
-describe('CryptoChartContainer', () => {
-  it('should render the symbol dropdown with options', () => {
+  beforeEach(() => {
+    fetchCryptoData.mockResolvedValue(mockData);
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  test("renders crypto symbol dropdown", async () => {
     render(<CryptoChartContainer />);
+    expect(screen.getByRole("combobox")).toBeInTheDocument();
 
-    // Check if the dropdown is rendered
-    const select = screen.getByRole('combobox');
-    expect(select).toBeInTheDocument();
-
-    // Check if all symbols are rendered as options
-    SYMBOLS.forEach((symbol) => {
-      const option = screen.getByRole('option', { name: symbol });
-      expect(option).toBeInTheDocument();
+    // Wait for charts to load
+    await waitFor(() => {
+      expect(fetchCryptoData).toHaveBeenCalledTimes(3);
     });
   });
 
+  test("fetches and displays chart data", async () => {
+    render(<CryptoChartContainer />);
+
+    await waitFor(() => {
+      expect(screen.getByText(/Weekly Performance/i)).toBeInTheDocument();
+      expect(screen.getByText(/Monthly Performance/i)).toBeInTheDocument();
+      expect(screen.getByText(/Yearly Performance/i)).toBeInTheDocument();
+    });
+  });
+
+  test("changes crypto symbol and refetches data", async () => {
+    render(<CryptoChartContainer />);
+    const select = screen.getByRole("combobox");
+
+    fireEvent.change(select, { target: { value: SYMBOLS[1] } });
+
+    await waitFor(() => {
+      expect(fetchCryptoData).toHaveBeenCalledWith(SYMBOLS[1], "week");
+    });
+  });
+
+  test("handles API error gracefully", async () => {
+    fetchCryptoData.mockRejectedValueOnce(new Error("API error"));
+
+    render(<CryptoChartContainer />);
+    await waitFor(() => {
+      expect(fetchCryptoData).toHaveBeenCalledTimes(3);
+    });
+
+    // Should not throw or crash UI
+    expect(screen.getByRole("combobox")).toBeInTheDocument();
+  });
 });

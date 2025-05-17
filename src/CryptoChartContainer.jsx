@@ -19,13 +19,15 @@ export const CryptoChartContainer = () => {
 
 const loadData = async () => {
   try {
-    const week = await fetchCryptoData(symbol, "week");
-    const month = await fetchCryptoData(symbol, "month");
-    const year = await fetchCryptoData(symbol, "year");
+    const [week, month, year] = await Promise.all([
+      fetchCryptoData(symbol, "week"),
+      fetchCryptoData(symbol, "month"),
+      fetchCryptoData(symbol, "year"),
+    ]);
 
     setData({ week, month, year });
   } catch (err) {
-    console.error("Unexpected error loading crypto data:", err);
+    console.error("Error loading crypto data:", err);
     setData({ week: [], month: [], year: [] });
   }
 };
